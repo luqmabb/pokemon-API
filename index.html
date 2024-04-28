@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pokemon</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div id="app">
+        <div class="container-fluid bg-dark bg-gradient">
+            <div class="container bg-dark" style="min-height: 100vh;">
+                <div class="row justify-content-center">
+                    <div class="col-3 row justify-content-center">
+                        <img src="pokemon.png" alt="">
+                    </div>
+                </div>
+
+                <div class="row justify-content-center mt-5 text-white">
+                    <div class="input-group mb-3" style="width: 600px">
+                        <input type="text" class="form-control" placeholder="what are you looking for type of pokemon?"
+                            aria-label="Recipient's username" aria-describedby="basic-addon2" v-model="search">
+                        <button class="input-group-text bg-primary-subtle" id="basic-addon2">Search</button>
+                    </div>
+                    <div class="d-flex flex-wrap" style="width: 700px;">
+                        <label class=" ms-5" for="">suggestion : 
+                            <span v-for="i in suggestion" class="suggest-pokemon" @click="viewDetailPoke(i.name)">{{ i.name}} | </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="main mt-5 pt-5">
+                    <div class="view-all text-white" v-if="!viewDetailStatus">
+                        <div class="d-flex justify-content-center flex-wrap">
+                            <div class="col-4 m-2 card" style="width: 260px;" v-for="item in pokemonList"
+                                @click="viewDetailPoke(item.name)">
+                                <img :src="item.sprites.front_default" alt="">
+                                <label class="text-center mb-4 text-white fs-5" for="">{{ item.name }}</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="view-detail text-white "></div>
+                    <div class=" mt-5" v-for="item in viewDetail">
+                        <button class="btn btn-primary ms-5" @click="deleteDetailStatus">kembali</button>
+                        <div class="row dfl justify-content-evenly px-3">
+                            <div class="col-5 text-white card white mt-4"><img :src="item.sprites.front_default" alt="">
+                            </div>
+                            <div class="col-6 mt-4">
+                                <p class="text-white fs-2"> {{ item.name }}</p>
+                                <p class="text-white">Type : {{ viewTypes }}</p>
+                                <p class="text-white">Skills : {{ viewSkills }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    </div>
+
+
+    <script type="module">
+        import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+
+        createApp({
+            data() {
+                return {
+                    status: 'dhsdsjkdbkjdkjsdkn',
+                    pokemonList: [],
+                    viewDetailStatus: false,
+                    viewDetail: [],
+                    viewTypes: '',
+                    viewSkills: '',
+                    search: '',
+                    gen1Pokemon: [],
+                    suggestion: ''
+                }
+            },
+            methods: {
+                async getListPokemon() {
+                    const response = await fetch("https://pokeapi.co/api/v2/pokemon/?limit=100");
+                    const data = await response.json();
+                    const results = data.results
+                    results.forEach(result => {
+                        this.getEachPokemon(result.url)
+                    });
+                },
+                
+                async getEachPokemon(url) {
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    this.pokemonList.sort((a, b) => a.id - b.id)
+                    this.pokemonList.push(data)
+
+                },
+                async viewDetailPoke(i) {
+                    const response = await fetch("https://pokeapi.co/api/v2/pokemon/" + i);
+                    const data = await response.json();
+                    this.viewDetail.push(data)
+
+                    data.types.forEach(element => {
+                        this.viewTypes += `${element.type.name} | `
+                    });
+
+                    data.moves.forEach(element => {
+                        this.viewSkills += `${element.move.name} | `
+                    });
+
+                    this.viewDetailStatus = true
+                },
+                deleteDetailStatus() {
+                    this.viewDetail.length = 0
+                    this.viewDetailStatus = false
+                },
+                async getGen1Pokemon() {
+                    const response = await fetch("https://pokeapi.co/api/v2/pokemon/?limit=151");
+                    const data = await response.json();
+                    let result = data.results
+
+                    this.gen1Pokemon = result
+                }
+
+            },
+            watch: {
+                search() {
+                    let filteredPokemon = this.gen1Pokemon.filter(item => {
+                        return item.name.includes(this.search)
+                    })
+
+                    this.suggestion = filteredPokemon
+                }
+            },
+            mounted() {
+                this.getListPokemon()
+                this.getGen1Pokemon()
+            }
+        }).mount('#app')
+    </script>
+</body>
+
+</html>
